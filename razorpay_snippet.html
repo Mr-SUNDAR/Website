@@ -1,0 +1,42 @@
+<!-- razorpay_snippet.html -->
+<link rel="stylesheet" href="/shoping/assets/style.css">
+<div style="text-align:center;margin:18px 0;">
+  <button id="rzp-button1" class="btn">Pay with Razorpay</button>
+</div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+async function startRazorpayCheckout(amount, name, email, phone) {
+  const res = await fetch('razorpay_order.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({amount: amount})
+  });
+  const order = await res.json();
+  if(order.error){ alert(order.error); return; }
+  const options = {
+    key: 'rzp_test_RWp002mNHfI31m',
+    amount: order.amount,
+    currency: 'INR',
+    name: 'SkillBuilder Academy - Electronics',
+    description: 'Order Payment',
+    order_id: order.id,
+    handler: async function (response){
+        await fetch('verify_payment.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(response)
+        });
+        alert('Payment successful!');
+        window.location.href='order_success.php?order=' + response.razorpay_order_id;
+    },
+    prefill: {name: name, email: email, contact: phone},
+    theme: {color: '#0a74da'}
+  };
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+document.getElementById('rzp-button1').addEventListener('click', function(e){
+  e.preventDefault();
+  startRazorpayCheckout(500, 'Customer', 'customer@example.com', '9999999999');
+});
+</script>

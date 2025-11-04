@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Draw Wheel</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      background: radial-gradient(circle, #1e1e2f, #151520);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      overflow: hidden;
+    }
+    h1 {
+      margin-top: 30px;
+      font-size: 40px;
+    }
+    .wheel-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      margin: 50px auto;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+    }
+    .logo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: white;
+      background-image: url('ach.png'); /* ✅ your logo */
+      background-size: cover;
+      background-position: center;
+      border: 5px solid gold;
+      z-index: 10;
+    }
+    button {
+      background: #ff4081;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #f50057;
+      transform: scale(1.05);
+    }
+    #winner {
+      font-size: 30px;
+      margin-top: 20px;
+      color: #ffeb3b;
+      text-shadow: 0 0 10px #ff0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎡 Lucky Draw Wheel 🎉</h1>
+
+  <!-- Removed file input -->
+  <div class="wheel-container">
+    <canvas id="wheel" width="400" height="400"></canvas>
+    <div class="logo"></div>
+  </div>
+
+  <button onclick="spinWheel()">🎲 Spin the Wheel</button>
+  <div id="winner"></div>
+
+  <script>
+    let names = [];
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const size = canvas.width;
+    let arc, angle = 0, spinning = false, spinAngle = 0;
+
+    // ✅ Automatically load Excel from the "lucky" folder
+    window.onload = async function() {
+      try {
+        const response = await fetch('lucky/names.xlsx');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        names = json.flat().filter(n => n && n.toString().trim().length > 0 && n !== "Name");
+        arc = (2 * Math.PI) / names.length;
+        draw();
+        alert("✅ Loaded " + names.length + " names from Excel!");
+      } catch (error) {
+        alert("⚠️ Could not load Excel file. Please make sure it's in the 'lucky' folder and named 'names.xlsx'");
+        console.error(error);
+      }
+    };
+
+    function drawWheel() {
+      if (!names.length) return;
+      for (let i = 0; i < names.length; i++) {
+        const startAngle = i * arc + angle;
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? "#f44336" : "#3f51b5";
+        ctx.moveTo(size / 2, size / 2);
+        ctx.arc(size / 2, size / 2, size / 2, startAngle, startAngle + arc);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(size / 2, size / 2);
+        ctx.rotate(startAngle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px Poppins";
+        ctx.fillText(names[i], size / 2 - 20, 10);
+        ctx.restore();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, size, size);
+      drawWheel();
+    }
+
+    function spinWheel() {
+      if (spinning || !names.length) return alert("Excel not loaded yet!");
+      document.getElementById("winner").textContent = "";
+      spinning = true;
+      spinAngle = Math.random() * 0.3 + 0.3;
+
+      const spinStart = Date.now();
+      function rotateWheel() {
+        angle += spinAngle;
+        const elapsed = Date.now() - spinStart;
+        if (elapsed > 5000) spinAngle *= 0.97;
+        if (spinAngle < 0.002) {
+          spinning = false;
+          showWinner();
+          return;
+        }
+        draw();
+        requestAnimationFrame(rotateWheel);
+      }
+      rotateWheel();
+    }
+
+    function showWinner() {
+      const degrees = (angle * 180) / Math.PI + 90;
+      const index = Math.floor((360 - (degrees % 360)) / (360 / names.length)) % names.length;
+      const winner = names[index];
+      document.getElementById("winner").textContent = `🏆 Winner: ${winner} 🏆`;
+      confetti();
+    }
+
+    function confetti() {
+      for (let i = 0; i < 100; i++) {
+        const conf = document.createElement("div");
+        conf.style.position = "fixed";
+        conf.style.width = "10px";
+        conf.style.height = "10px";
+        conf.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        conf.style.left = Math.random() * 100 + "vw";
+        conf.style.top = "-10px";
+        conf.style.borderRadius = "50%";
+        conf.style.opacity = 0.8;
+        conf.style.transition = "transform 3s ease-in, top 3s ease-in";
+        document.body.appendChild(conf);
+        setTimeout(() => {
+          conf.style.top = "100vh";
+          conf.style.transform = `rotate(${Math.random() * 720}deg)`;
+        }, 10);
+        setTimeout(() => conf.remove(), 3000);
+      }
+    }
+
+    draw();
+  </script>
+</body>
+</html>

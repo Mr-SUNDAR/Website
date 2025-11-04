@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact - SkillBuilder Academy</title>
+<link rel="icon" type="image/png" href="images/logo.png">
+<style>
+body { margin: 0; font-family: 'Poppins', sans-serif; background: #f4f9ff; color: #333; }
+header, footer { background: #0077cc; color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; }
+.logo-container { display: flex; align-items: center; }
+.logo-container img { height: 40px; margin-right: 10px; }
+.logo-container span { font-size: 20px; font-weight: bold; }
+nav { display: flex; gap: 15px; }
+nav a { color: white; text-decoration: none; font-weight: 500; }
+nav a:hover { text-decoration: underline; }
+.menu-toggle { display: none; flex-direction: column; cursor: pointer; }
+.menu-toggle div { width: 25px; height: 3px; background: white; margin: 4px 0; }
+@media (max-width: 768px) {
+    nav { display: none; flex-direction: column; background: #005fa3; position: absolute; top: 60px; right: 0; width: 200px; padding: 10px; }
+    nav.show { display: flex; }
+    .menu-toggle { display: flex; }
+}
+.contact-section { max-width: 600px; margin: 40px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.contact-section h1 { color: #0077cc; margin-bottom: 15px; text-align: center; }
+.contact-section form { display: flex; flex-direction: column; }
+.contact-section input, .contact-section textarea { padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+.contact-section button { padding: 12px; border: none; border-radius: 8px; background: #0077cc; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; }
+.contact-section button:hover { background: #005fa3; }
+footer { text-align: center; margin-top: 40px; padding: 10px 0; }
+.success-msg { color: green; text-align: center; margin-bottom: 10px; }
+.error-msg { color: red; text-align: center; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="images/logo.png" alt="Logo">
+        <span>SkillBuilder Academy</span>
+    </div>
+    <nav id="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="projects.html">Projects</a>
+        <a href="gallery.php">Gallery</a>
+        <a href="contact.html">Contact</a>
+        <a href="smartshare.php">Shared Files</a>
+    </nav>
+    <div class="menu-toggle" onclick="document.getElementById('navbar').classList.toggle('show')">
+        <div></div><div></div><div></div>
+    </div>
+</header>
+
+<section class="contact-section">
+    <h1>Contact Me</h1>
+    <form id="contactForm">
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="tel" name="phone" placeholder="Your Mobile Number" required>
+        <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+    <p id="statusMsg"></p>
+</section>
+
+<footer>
+    <p>© 2025 Sundar Rajan | SkillBuilder Academy</p>
+</footer>
+
+<script>
+const botToken = "7543005714:AAGtYAKqsGdcgt0etwd0OMw3KmlMXFmE90I";  // Replace with your Telegram bot token
+const chatId = "901714222";      // Replace with your chat ID
+
+document.getElementById('contactForm').addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const name = this.name.value.trim();
+    const phone = this.phone.value.trim();
+    const message = this.message.value.trim();
+
+    if(!name || !phone || !message) return;
+
+    const text = `📩 New Contact Form our website:\n\n👤 Name: ${name}\n📱 Mobile: ${phone}\n📝 Message:\n${message}`;
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`)
+    .then(response => response.json())
+    .then(data => {
+        const status = document.getElementById('statusMsg');
+        if(data.ok){
+            status.textContent = "✅ Your info have been sent to Mr.Sundar!";
+            status.className = "success-msg";
+            this.reset();
+        } else {
+            status.textContent = "❌ Failed to send message. Try again.";
+            status.className = "error-msg";
+        }
+    })
+    .catch(err => {
+        const status = document.getElementById('statusMsg');
+        status.textContent = "❌ Error: " + err;
+        status.className = "error-msg";
+    });
+});
+</script>
+
+</body>
+</html>
